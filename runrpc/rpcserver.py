@@ -59,10 +59,11 @@ class MongoProtocol(object):
 
     def handlequery(self,query):
         #flags,packet = query[:4],query[4:]
-        self.__collection,query = bson._get_c_string(query[4:])
         #skip the skip and limit
         try:
-            spec = bson.BSON(query[8:]).decode()
+            self.__collection,pos = bson._get_c_string(query,4)
+            query = query[pos+8:]
+            spec = bson.BSON(query).decode()
         except:
             retdict = {'$error':{'message':'InternalError',
                                  'detail':'unvalid bson'}}
