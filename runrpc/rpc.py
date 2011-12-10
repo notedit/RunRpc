@@ -38,25 +38,25 @@ class RpcClient(object):
         return
 
     def __getattr__(self,funcname):
-        if funcname.startwith('_'):
+        if funcname.startswith('_'):
             return "you are trying to call %s from our backend"%funcname
         else:
             func = lambda *args,**kwargs:self.__call__(funcname,*args,**kwargs)
             return func
 
     def __call__(self,funcname,*args,**kwargs):
-        argstr = BSON.encode((args,kwargs))
-        querydict = {'funcname':funcname,'argstr':argstr}
+        querydict = {'funcname':funcname,'argstr':(args,kwargs)}
         try:
             collection = self.__connection['backend']['rpc']
             ret = collection.find_one(querydict)
-            
-            return ret['result']
+            if ret.get('$error',None):
+                raise BackendError(ret['$error']['message'],ret['$error']['detail'])
+            return ret['$result'] or None
         finally:
             if self.__connection:
                 self.__connection.end_request()
 
-def start(port=27018,funcmapping={}):
+def start(port=27019,funcmapping={}):
     sockets = bind_sockets(port)
     fork_processes(2)
     s = RpcServer(funcmapping=remote_funcmapping)

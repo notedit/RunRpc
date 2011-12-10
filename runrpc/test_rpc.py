@@ -24,4 +24,4 @@ def raiseerror():
 
 
 if __name__ == '__main__':
-    rpc.start()
+    rpc.start(port=27019)
